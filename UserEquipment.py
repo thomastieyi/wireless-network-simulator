@@ -341,7 +341,11 @@ class user_equipment:
             if elem not in self.bs_bitrate_allocation:
                 #this means that it is the first time we encounter that base station
                 self.bs_bitrate_allocation[elem] = 0
-        
+        print("self.requested_bitrate",self.requested_bitrate)
+        print("self.env.wardrop_beta",self.env.wardrop_beta)
+        print("self.env.sampling_time",self.env.sampling_time)
+        print("len(rsrp)",len(rsrp))
+        print("len(self.env.ue_list)",len(self.env.ue_list))
         #compute wardrop sigma
         self.wardrop_sigma = (self.env.wardrop_epsilon)/(2*self.env.sampling_time*self.env.wardrop_beta*self.requested_bitrate*(len(rsrp)-1)*len(self.env.ue_list))
 

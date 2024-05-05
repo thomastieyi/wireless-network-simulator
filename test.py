@@ -10,7 +10,7 @@ import pandas as pd
 
 PLOT = False
 N_UE = 20
-ITER = 40000    
+ITER = 600    
 
 SELECTED_UE = 3
 
@@ -117,7 +117,7 @@ for i in range(len(parm)):
 env.initial_timestep();
 print(env.wardrop_beta)
 
-#util.plot(ue, bs, env)
+util.plot(ue, bs, env)
 #plt.pause(10)
 
 for phone in ue:

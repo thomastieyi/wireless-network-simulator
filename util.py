@@ -9,6 +9,8 @@ class EnvType (Enum):
     RURAL = 0
     SUBURBAN = 1
     URBAN = 2
+    INDOOR_FR2 = 3
+    INDOOR_FR1 = 4
 
 
 MIN_RSRP = -120 # -140 #dB
@@ -27,6 +29,53 @@ def compute_rsrp(ue, bs, env):
         else:
             subcarrier_power = 10*math.log10(bs.antenna_power*1000 / ((bs.total_prb/(10*2**bs.numerology))*bs.number_subcarriers))
         return subcarrier_power + bs.antenna_gain - bs.feeder_loss - path_loss
+
+import math
+
+def compute_path_loss(ue, bs, env, save=None):
+    # 计算两点之间的距离（单位：米）
+    dist_m = math.sqrt((ue.current_position[0] - bs.position[0])**2 +
+                       (ue.current_position[1] - bs.position[1])**2)
+    freq_ghz = bs.carrier_frequency / 1000  # 将频率从MHz转换为GHz
+
+    # 判断LOS/NLOS状态，这里简化为总是LOS，实际应用中需要根据环境确定
+    is_los = True
+
+    # 根据环境类型选择计算路径损耗的方法
+    if env in [EnvType.RURAL, EnvType.SUBURBAN, EnvType.URBAN]:
+        # 这里应该根据COST-HATA模型计算路径损耗，暂时省略详细计算
+        path_loss = 0  # 应替换为COST-HATA模型的计算结果
+    elif env == EnvType.INDOOR_FR2:
+        # 使用3GPP mmWave室内模型计算路径损耗
+        path_loss = compute_path_loss_3gpp_mmwave(dist_m, freq_ghz, is_los, ue.h_m)
+    elif env == EnvType.INDOOR_FR1:
+        # 使用简化的FR1室内模型计算路径损耗
+        path_loss = 30 + 22 * math.log10(dist_m / 1000) + 20 * math.log10(freq_ghz)  # 注意：这里距离单位是千米
+    else:
+        raise ValueError("Unsupported environment type.")
+
+    # 如果提供了save参数，保存路径损耗值
+    if save is not None:
+        save['path_loss'] = path_loss
+
+    return path_loss
+
+# 3GPP mmWave室内模型计算公式
+def compute_path_loss_3gpp_mmwave(dist_m, freq_ghz, is_los=True, ut_height=1.5):
+    """
+    Compute the path loss using 3GPP mmWave indoor model.
+    """
+    if dist_m == 0:  # Avoid log(0)
+        dist_m = 0.01
+    
+    if is_los:
+        # Direct path loss for LOS
+        path_loss = 32.4 + 20 * math.log10(dist_m) + 20 * math.log10(freq_ghz)
+    else:
+        # Path loss for NLOS
+        path_loss = 13.54 + 39.08 * math.log10(dist_m) + 20 * math.log10(freq_ghz) - 0.6 * (ut_height - 1.5)
+    
+    return path_loss
 
 def compute_path_loss_cost_hata(ue, bs, env, save = None):
     #compute distance first
@@ -82,10 +131,10 @@ def plot(ue, bs, env):
     global ax
     global fig
     global run
-    if run == 0:
-        plt.ion()
-        fig, ax = plt.subplots()
-        run = 1
+    # if run == 0:
+    plt.ion()
+    fig, ax = plt.subplots()
+    # run = 1
 
     
     x_ue = []
@@ -94,7 +143,7 @@ def plot(ue, bs, env):
     y_bs = []
 
     plt.cla()
-
+    print(bs)
     #ax.set_xlim(0, env.x_limit)
     #ax.set_ylim(0, env.y_limit)
 

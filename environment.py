@@ -122,7 +122,7 @@ class wireless_environment:
                 #if res > -1000000:
                 if (res > util.MIN_RSRP):
                     rsrp[i] = res
-       #print(rsrp)
+       print(rsrp)
        return rsrp
 
     def initial_timestep(self):
